@@ -33,3 +33,13 @@ Thumbs.db
 
 # Docker
 .dockerignore
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+.terraform.lock.hcl
+terraform.tfplan
+terraform.tfplan.*
