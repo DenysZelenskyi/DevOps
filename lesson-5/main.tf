@@ -24,7 +24,7 @@ resource "random_string" "bucket_suffix" {
 
 module "s3_backend" {
   source = "./modules/s3-backend"
-  
+
   bucket_name = local.bucket_name
   table_name  = var.dynamodb_table_name
   environment = var.environment
@@ -32,13 +32,17 @@ module "s3_backend" {
 
 module "vpc" {
   source = "./modules/vpc"
-  
-  vpc_cidr    = var.vpc_cidr
-  environment = var.environment
+
+  vpc_cidr           = var.vpc_cidr
+  public_subnets     = var.public_subnets
+  private_subnets    = var.private_subnets
+  availability_zones = var.availability_zones
+  enable_nat_gateway = var.enable_nat_gateway
+  environment        = var.environment
 }
 
 module "ecr" {
   source = "./modules/ecr"
-  
+
   environment = var.environment
 }
