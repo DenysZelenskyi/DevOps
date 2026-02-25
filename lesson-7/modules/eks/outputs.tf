@@ -29,6 +29,11 @@ output "cluster_version" {
   description = "The Kubernetes server version for the cluster"
 }
 
+output "node_role_arn" {
+  value       = aws_iam_role.eks_nodes.arn
+  description = "ARN of the EKS node IAM role"
+}
+
 output "node_group_id" {
   value       = aws_eks_node_group.main.id
   description = "EKS node group ID"
