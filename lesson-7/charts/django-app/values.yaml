@@ -20,16 +20,19 @@ resources:
 
 autoscaling:
   enabled: true
-  minReplicas: 1
-  maxReplicas: 3
+  minReplicas: 2
+  maxReplicas: 6
   targetCPUUtilizationPercentage: 70
 
 configMap:
-  POSTGRES_HOST: "postgres"  # If you deploy postgres separately, update this
+  POSTGRES_HOST: "postgres"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: postgres
   POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
   DJANGO_SETTINGS_MODULE: goit.settings
   ALLOWED_HOSTS: "*"
   DEBUG: "False"
+
+secrets:
+  POSTGRES_PASSWORD: postgres
+  SECRET_KEY: "django-insecure-change-this-in-production"

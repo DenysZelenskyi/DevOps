@@ -40,9 +40,10 @@ lesson-7/
         │   ├── deployment.yaml
         │   ├── service.yaml
         │   ├── configmap.yaml
+        │   ├── secret.yaml
         │   └── hpa.yaml
         ├── Chart.yaml
-        └── values.yaml      # ConfigMap with environment variables
+        └── values.yaml      # Configuration with environment variables and secrets
 ```
 
 ## Deployment Steps
@@ -120,6 +121,13 @@ Once the EXTERNAL-IP appears, test your application:
 curl http://<EXTERNAL-IP>/health/
 ```
 
+## Security Features
+
+- **Kubernetes Secrets**: Sensitive data (passwords, keys) stored securely in Kubernetes Secrets, not in ConfigMaps
+- **ECR Policy**: Restricted to account owner only, removed wildcard access
+- **S3 Backend**: Enabled with encryption and versioning for state management
+- **HPA Configuration**: Auto-scaling 2-6 replicas based on CPU utilization (70%)
+
 ## Cleanup
 
 To delete all created resources, run:
@@ -133,7 +141,11 @@ kubectl get svc
 
 # Destroy infrastructure
 terraform destroy
-```  
+```
+
+## Troubleshooting
+
+**Problem:** kubectl can't connect to cluster  
 **Solution:** Run `aws eks update-kubeconfig --region us-east-1 --name lesson-7-eks-cluster`
 
 **Problem:** Pods in ImagePullBackOff  

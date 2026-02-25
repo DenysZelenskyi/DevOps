@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_ecr_repository" "main" {
   name                 = "${var.environment}-ecr"
   image_tag_mutability = "MUTABLE"
@@ -27,7 +29,7 @@ resource "aws_ecr_repository_policy" "main" {
         Sid    = "AllowPushPull"
         Effect = "Allow"
         Principal = {
-          AWS = "*"
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
         Action = [
           "ecr:GetDownloadUrlForLayer",
@@ -40,18 +42,8 @@ resource "aws_ecr_repository_policy" "main" {
           "ecr:DescribeRepositories",
           "ecr:GetRepositoryPolicy",
           "ecr:ListImages",
-          "ecr:DescribeImages",
-          "ecr:BatchDeleteImage",
-          "ecr:GetLifecyclePolicy",
-          "ecr:GetLifecyclePolicyPreview",
-          "ecr:ListTagsForResource",
-          "ecr:DescribeImageScanFindings"
+          "ecr:DescribeImages"
         ]
-        Condition = {
-          StringEquals = {
-            "aws:RequestedRegion" = data.aws_region.current.name
-          }
-        }
       }
     ]
   })
