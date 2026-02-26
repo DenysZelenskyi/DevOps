@@ -1,0 +1,54 @@
+global:
+  domain: argocd.example.com
+
+configs:
+  params:
+    server.insecure: true  # Для LoadBalancer без TLS
+  
+  cm:
+    timeout.reconciliation: 30s  # Швидка синхронізація
+    application.instanceLabelKey: argocd.argoproj.io/instance
+
+server:
+  service:
+    type: NodePort
+    nodePortHttp: 30080
+    nodePortHttps: 30443
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+controller:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+dex:
+  enabled: false  # Відключаємо SSO для простоти
+
+redis:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi

@@ -1,0 +1,38 @@
+replicaCount: 2
+
+image:
+  repository: "893978477278.dkr.ecr.us-east-1.amazonaws.com/lesson-7-ecr"
+  pullPolicy: Always
+  tag: "latest"
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8000
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+configMap:
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: postgres
+  POSTGRES_USER: postgres
+  DJANGO_SETTINGS_MODULE: goit.settings
+  ALLOWED_HOSTS: "*"
+  DEBUG: "False"
+
+secrets:
+  POSTGRES_PASSWORD: postgres
+  SECRET_KEY: "django-insecure-change-this-in-production"

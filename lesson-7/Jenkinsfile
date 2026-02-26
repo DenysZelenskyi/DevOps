@@ -1,0 +1,118 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: agent
+spec:
+  serviceAccountName: jenkins
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:v1.23.0-debug
+    command:
+    - /busybox/cat
+    tty: true
+    volumeMounts:
+    - name: docker-config
+      mountPath: /kaniko/.docker
+  - name: aws
+    image: amazon/aws-cli:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: docker-config
+      mountPath: /docker-config
+  - name: git
+    image: alpine/git:latest
+    command:
+    - cat
+    tty: true
+  volumes:
+  - name: docker-config
+    emptyDir: {}
+"""
+        }
+    }
+
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REPO = credentials('ecr-repository-url')
+        GIT_HELM_REPO = 'https://github.com/DenysZelenskyi/devops-lesson-8-9.git'
+        GIT_CREDENTIALS = credentials('github-token')
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('ECR Login') {
+            steps {
+                container('aws') {
+                    sh '''
+                        ECR_REGISTRY=$(echo "$ECR_REPO" | cut -d'/' -f1)
+                        TOKEN=$(aws ecr get-login-password --region "$AWS_REGION")
+                        AUTH=$(printf 'AWS:%s' "$TOKEN" | base64 -w 0)
+                        printf '{"auths":{"%s":{"auth":"%s"}}}' "$ECR_REGISTRY" "$AUTH" > /docker-config/config.json
+                        echo "ECR login config created for $ECR_REGISTRY"
+                    '''
+                }
+            }
+        }
+
+        stage('Build and Push Docker Image') {
+            steps {
+                container('kaniko') {
+                    sh """
+                        /kaniko/executor \
+                            --context=\${WORKSPACE}/lesson-7/django \
+                            --dockerfile=\${WORKSPACE}/lesson-7/django/Dockerfile \
+                            --destination=\${ECR_REPO}:\${IMAGE_TAG} \
+                            --destination=\${ECR_REPO}:latest \
+                            --cache=true \
+                            --cache-ttl=24h
+                    """
+                }
+            }
+        }
+
+        stage('Update Helm Chart') {
+            steps {
+                container('git') {
+                    sh """
+                        apk add --no-cache yq
+
+                        git config --global user.email "jenkins@example.com"
+                        git config --global user.name "Jenkins CI"
+
+                        rm -rf helm-charts-repo
+                        git clone https://\${GIT_CREDENTIALS_USR}:\${GIT_CREDENTIALS_PSW}@github.com/DenysZelenskyi/devops-lesson-8-9.git helm-charts-repo
+
+                        cd helm-charts-repo
+                        yq eval ".image.tag = \"${IMAGE_TAG}\"" -i charts/django-app/values.yaml
+
+                        git add charts/django-app/values.yaml
+                        git commit -m "Update image tag to \${IMAGE_TAG}"
+                        git push origin main
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully! Image tag: ${IMAGE_TAG}"
+        }
+        failure {
+            echo "Pipeline failed!"
+        }
+    }
+}

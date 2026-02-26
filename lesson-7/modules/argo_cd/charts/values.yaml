@@ -1,0 +1,5 @@
+# Default values for argocd-apps chart
+repoUrl: ""
+appPath: "charts/django-app"
+appNamespace: "default"
+argocdNamespace: "argocd"

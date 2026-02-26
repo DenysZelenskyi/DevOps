@@ -1,0 +1,93 @@
+controller:
+  admin:
+    password: "${admin_password}"
+  
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+  serviceType: NodePort
+  servicePort: 8080
+  
+  installPlugins:
+    - kubernetes:4423.vb_59f230b_ce53
+    - workflow-aggregator:600.vb_57cdd26fdd7
+    - git:5.6.0
+    - configuration-as-code:2037.v8e5349845172
+    - docker-workflow:580.vc0c340686b_54
+    - pipeline-stage-view:2.34
+    - credentials-binding:717.v951d49b_5f3a_a_
+    - aws-credentials:254.v978a_5e206a_d7
+
+  JCasC:
+    defaultConfig: true
+    configScripts:
+      welcome-message: |
+        jenkins:
+          systemMessage: "Jenkins configured automatically by Terraform + Helm"
+      credentials: |
+        credentials:
+          system:
+            domainCredentials:
+              - credentials:
+                  - string:
+                      id: "ecr-repository-url"
+                      description: "ECR Repository URL"
+                      secret: "${ecr_repository_url}"
+                      scope: GLOBAL
+                  - usernamePassword:
+                      id: "github-token"
+                      description: "GitHub Personal Access Token"
+                      username: "DenysZelenskyi"
+                      password: "${github_token}"
+                      scope: GLOBAL
+
+agent:
+  enabled: true
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  
+  # Kaniko для збірки образів без Docker
+  podTemplates:
+    kaniko: |
+      - name: kaniko
+        label: kaniko
+        serviceAccount: jenkins
+        containers:
+          - name: kaniko
+            image: gcr.io/kaniko-project/executor:v1.23.0-debug
+            command: /busybox/cat
+            ttyEnabled: true
+          - name: git
+            image: alpine/git:latest
+            command: /bin/sh
+            args: "sleep 99999"
+            ttyEnabled: true
+        volumes:
+          - emptyDirVolume:
+              memory: false
+              mountPath: /kaniko/.docker
+
+persistence:
+  enabled: true
+  storageClass: "gp2"
+  size: "10Gi"
+
+serviceAccount:
+  create: true
+  name: jenkins
+  annotations:
+    eks.amazonaws.com/role-arn: "${service_account_role_arn}"
+
+rbac:
+  create: true
+  readSecrets: true
