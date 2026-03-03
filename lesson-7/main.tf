@@ -132,3 +132,28 @@ module "argo_cd" {
   django_app_repo_url    = var.django_app_repo_url
   django_app_path        = var.django_app_path
 }
+
+# RDS module
+module "rds" {
+  source = "./modules/rds"
+
+  identifier     = var.rds_identifier
+  use_aurora     = var.use_aurora
+  engine         = var.rds_engine
+  engine_version = var.rds_engine_version
+  instance_class = var.rds_instance_class
+  multi_az       = var.rds_multi_az
+
+  allocated_storage = var.rds_allocated_storage
+  db_name           = var.rds_db_name
+  db_username       = var.rds_db_username
+  db_password       = var.rds_db_password
+
+  vpc_id              = module.vpc.vpc_id
+  subnet_ids          = module.vpc.private_subnet_ids
+  allowed_cidr_blocks = [var.vpc_cidr]
+
+  skip_final_snapshot = true
+  deletion_protection = false
+  environment         = var.environment
+}

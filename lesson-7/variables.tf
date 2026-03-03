@@ -84,3 +84,68 @@ variable "django_app_path" {
   description = "Path to Django app Helm chart in repository"
   default     = "charts/django-app"
 }
+
+# ─────────────────────────────────────────────
+# RDS Variables
+# ─────────────────────────────────────────────
+
+variable "rds_identifier" {
+  type        = string
+  description = "Unique identifier for the RDS instance or Aurora cluster"
+  default     = "lesson-7-db"
+}
+
+variable "use_aurora" {
+  type        = bool
+  description = "If true, creates an Aurora Cluster. If false, creates a standard RDS instance."
+  default     = false
+}
+
+variable "rds_engine" {
+  type        = string
+  description = "Database engine (e.g. postgres, mysql, aurora-postgresql, aurora-mysql)"
+  default     = "postgres"
+}
+
+variable "rds_engine_version" {
+  type        = string
+  description = "Database engine version"
+  default     = "15.7"
+}
+
+variable "rds_instance_class" {
+  type        = string
+  description = "Instance class for the DB"
+  default     = "db.t3.medium"
+}
+
+variable "rds_multi_az" {
+  type        = bool
+  description = "Enable Multi-AZ deployment (only for standard RDS)"
+  default     = false
+}
+
+variable "rds_allocated_storage" {
+  type        = number
+  description = "Allocated storage in GB (only for standard RDS)"
+  default     = 20
+}
+
+variable "rds_db_name" {
+  type        = string
+  description = "Name of the initial database"
+  default     = "appdb"
+}
+
+variable "rds_db_username" {
+  type        = string
+  description = "Master username for the database"
+  default     = "dbadmin"
+}
+
+variable "rds_db_password" {
+  type        = string
+  description = "Master password for the database"
+  sensitive   = true
+  default     = "changeme123!"
+}

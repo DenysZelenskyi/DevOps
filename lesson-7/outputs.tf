@@ -59,6 +59,31 @@ output "argocd_url" {
   description = "Argo CD server URL"
 }
 
+output "rds_endpoint" {
+  value       = module.rds.db_endpoint
+  description = "RDS / Aurora endpoint for application connection"
+}
+
+output "rds_reader_endpoint" {
+  value       = module.rds.db_reader_endpoint
+  description = "RDS reader endpoint (Aurora only)"
+}
+
+output "rds_port" {
+  value       = module.rds.db_port
+  description = "Database port"
+}
+
+output "rds_db_name" {
+  value       = module.rds.db_name
+  description = "Initial database name"
+}
+
+output "rds_security_group_id" {
+  value       = module.rds.security_group_id
+  description = "Security group ID of the RDS instance"
+}
+
 output "argocd_admin_password_command" {
   value       = module.argo_cd.argocd_admin_password
   description = "Command to get Argo CD admin password"
