@@ -39,6 +39,12 @@ lesson-7/
 │   ├── vpc/                 # VPC with public/private subnets and NAT
 │   ├── ecr/                 # ECR repository
 │   ├── eks/                 # EKS cluster + EBS CSI Driver
+│   ├── rds/                 # Universal RDS module (Aurora or standard RDS)
+│   │   ├── rds.tf           # Standard RDS instance (use_aurora = false)
+│   │   ├── aurora.tf        # Aurora cluster + writer (use_aurora = true)
+│   │   ├── shared.tf        # Shared: subnet group, security group, parameter group
+│   │   ├── variables.tf     # Module variables
+│   │   └── outputs.tf       # Outputs: endpoint, port, db_name, etc.
 │   ├── jenkins/             # Jenkins via Helm
 │   └── argo_cd/             # Argo CD via Helm + Application chart
 │
@@ -268,6 +274,88 @@ aws ecr describe-images --repository-name lesson-7-ecr --region us-east-1
 kubectl logs -n jenkins <pod-name> -c kaniko
 ```
 
+## RDS Module
+
+The `modules/rds` module is universal — it supports both **Aurora** and **standard RDS** via a single `use_aurora` flag.
+
+### How it works
+
+| `use_aurora` | Resource created |
+|---|---|
+| `false` | `aws_db_instance` (standard RDS) |
+| `true` | `aws_rds_cluster` + `aws_rds_cluster_instance` (Aurora) |
+
+In both cases the module always creates:
+- `aws_db_subnet_group` — places DB in private subnets
+- `aws_security_group` — allows DB port from VPC CIDR
+- `aws_db_parameter_group` or `aws_rds_cluster_parameter_group` with parameters: `max_connections`, `log_statement`, `work_mem`
+
+### Usage example — Standard RDS (PostgreSQL)
+
+```hcl
+module "rds" {
+  source         = "./modules/rds"
+
+  identifier     = "my-db"
+  use_aurora     = false
+
+  engine         = "postgres"
+  engine_version = "15.7"
+  instance_class = "db.t3.medium"
+  multi_az       = false
+  allocated_storage = 20
+
+  db_name     = "appdb"
+  db_username = "dbadmin"
+  db_password = "changeme123!"
+
+  vpc_id              = module.vpc.vpc_id
+  subnet_ids          = module.vpc.private_subnet_ids
+  allowed_cidr_blocks = ["10.0.0.0/16"]
+
+  environment         = "production"
+  skip_final_snapshot = true
+  deletion_protection = false
+}
+```
+
+### Usage example — Aurora (PostgreSQL)
+
+```hcl
+module "rds" {
+  source         = "./modules/rds"
+
+  identifier     = "my-aurora-db"
+  use_aurora     = true
+
+  engine         = "aurora-postgresql"
+  engine_version = "15.4"
+  instance_class = "db.r6g.large"
+
+  db_name     = "appdb"
+  db_username = "dbadmin"
+  db_password = "changeme123!"
+
+  vpc_id              = module.vpc.vpc_id
+  subnet_ids          = module.vpc.private_subnet_ids
+  allowed_cidr_blocks = ["10.0.0.0/16"]
+
+  environment         = "production"
+  skip_final_snapshot = true
+  deletion_protection = false
+}
+```
+
+### Outputs
+
+```bash
+terraform output rds_endpoint        # DB connection endpoint
+terraform output rds_reader_endpoint # Reader endpoint (Aurora) or same as endpoint
+terraform output rds_port            # 5432 (postgres) or 3306 (mysql)
+terraform output rds_db_name         # Database name
+terraform output rds_security_group_id
+```
+
 ## Cleanup
 
 ```bash
@@ -282,5 +370,5 @@ terraform destroy -auto-approve
 
 **Student**: Denys Zelenskyi  
 **Course**: DevOps  
-**Lesson**: 8-9 — CI/CD with Jenkins and Argo CD  
-**Branch**: `lesson-8-9`
+**Lesson**: 8-9 + DB Module — CI/CD with Jenkins, Argo CD, and Universal RDS Module  
+**Branch**: `lesson-db-module`
