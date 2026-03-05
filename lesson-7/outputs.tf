@@ -88,3 +88,19 @@ output "argocd_admin_password_command" {
   value       = module.argo_cd.argocd_admin_password
   description = "Command to get Argo CD admin password"
 }
+
+output "grafana_url" {
+  value       = module.monitoring.grafana_url
+  description = "Grafana access command"
+}
+
+output "prometheus_url" {
+  value       = module.monitoring.prometheus_url
+  description = "Prometheus access command"
+}
+
+output "grafana_admin_password" {
+  value       = module.monitoring.grafana_admin_password
+  description = "Grafana admin password"
+  sensitive   = true
+}

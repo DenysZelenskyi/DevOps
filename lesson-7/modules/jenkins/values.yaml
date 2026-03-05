@@ -1,7 +1,7 @@
 controller:
   admin:
     password: "${admin_password}"
-  
+
   resources:
     requests:
       cpu: "250m"
@@ -12,7 +12,7 @@ controller:
 
   serviceType: NodePort
   servicePort: 8080
-  
+
   installPlugins:
     - kubernetes:4423.vb_59f230b_ce53
     - workflow-aggregator:600.vb_57cdd26fdd7
@@ -55,7 +55,7 @@ agent:
     limits:
       cpu: "500m"
       memory: "1Gi"
-  
+
   # Kaniko для збірки образів без Docker
   podTemplates:
     kaniko: |

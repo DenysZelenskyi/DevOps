@@ -1,3 +1,28 @@
+# Core EKS Addons (required when bootstrap_self_managed_addons = false)
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "vpc-cni"
+
+  depends_on = [aws_iam_openid_connect_provider.eks]
+}
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "kube-proxy"
+
+  depends_on = [aws_eks_addon.vpc_cni]
+}
+
+resource "aws_eks_addon" "coredns" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "coredns"
+
+  depends_on = [
+    aws_eks_addon.kube_proxy,
+    aws_eks_node_group.main
+  ]
+}
+
 # AWS EBS CSI Driver for persistent volumes in EKS
 
 data "aws_iam_policy_document" "ebs_csi_driver" {

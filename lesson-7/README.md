@@ -232,6 +232,120 @@ Login with `admin` / password from the command above.
 - S3 backend with encryption enabled
 - EKS nodes in private subnets
 
+## Final Project Additions (Monitoring + EKS Addons)
+
+This repository was extended for the **final-project** requirements:
+
+- **Monitoring** via `modules/monitoring/` (Helm `kube-prometheus-stack`): Prometheus, Alertmanager, Grafana, node-exporter, kube-state-metrics.
+- **Namespaces** used: `jenkins`, `argocd`, `monitoring`.
+- **EKS core addons** are explicitly managed to ensure nodes become `Ready`: `vpc-cni`, `kube-proxy`, `coredns`, `aws-ebs-csi-driver`.
+
+### Monitoring Access (Grafana / Prometheus)
+
+```bash
+# Grafana
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+# Open: http://localhost:3000
+
+# Prometheus
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
+# Open: http://localhost:9090
+```
+
+Grafana credentials:
+
+```bash
+terraform output -raw grafana_admin_password
+```
+
+### Notes
+
+- If a local port is already busy (for example `8080`), use another one, e.g. `8081:80` for Argo CD.
+- Remote backend file may be present as `backend.tf.disabled` (rename to `backend.tf` when you want to enable S3/DynamoDB remote state).
+
+## Final Project
+
+This section is an **addition** for the final project requirements (it does not replace the steps above).
+
+### Technical requirements
+
+- AWS infrastructure using Terraform
+- Components: VPC, EKS, RDS, ECR, Jenkins, Argo CD, Prometheus, Grafana
+
+### Execution steps
+
+#### 1) Prepare
+
+```bash
+terraform init
+```
+
+Make sure required variables are set: `github_token`, `django_app_repo_url`, `grafana_admin_password`.
+
+#### 2) Deploy
+
+```bash
+terraform apply
+```
+
+Verify namespaces:
+
+```bash
+kubectl get all -n jenkins
+kubectl get all -n argocd
+kubectl get all -n monitoring
+```
+
+#### 3) Access services
+
+Jenkins:
+
+```bash
+kubectl port-forward svc/jenkins 8080:8080 -n jenkins
+```
+
+Argo CD (this repo uses `server.insecure: true`, so HTTP is recommended):
+
+```bash
+kubectl port-forward svc/argocd-server 8081:80 -n argocd
+```
+
+If you prefer TLS/HTTPS:
+
+```bash
+kubectl port-forward svc/argocd-server 8081:443 -n argocd
+```
+
+#### 4) Monitoring
+
+Grafana service name depends on the Helm release. In this repo it is `kube-prometheus-stack-grafana`:
+
+```bash
+kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
+```
+
+Prometheus:
+
+```bash
+kubectl port-forward svc/kube-prometheus-stack-prometheus 9090:9090 -n monitoring
+```
+
+Grafana password:
+
+```bash
+terraform output -raw grafana_admin_password
+```
+
+### ⚠️ Cost warning
+
+After verification, remove resources to avoid charges:
+
+```bash
+terraform destroy
+```
+
+Note: destroying everything may also remove S3/DynamoDB backend resources used for Terraform state.
+
 ## Verification
 
 ```bash
@@ -241,6 +355,9 @@ kubectl get pods -n jenkins
 # Argo CD
 kubectl get pods -n argocd
 kubectl get application -n argocd
+
+# Monitoring
+kubectl get pods -n monitoring
 
 # Django application
 kubectl get pods
@@ -280,12 +397,13 @@ The `modules/rds` module is universal — it supports both **Aurora** and **stan
 
 ### How it works
 
-| `use_aurora` | Resource created |
-|---|---|
-| `false` | `aws_db_instance` (standard RDS) |
-| `true` | `aws_rds_cluster` + `aws_rds_cluster_instance` (Aurora) |
+| `use_aurora` | Resource created                                        |
+| ------------ | ------------------------------------------------------- |
+| `false`      | `aws_db_instance` (standard RDS)                        |
+| `true`       | `aws_rds_cluster` + `aws_rds_cluster_instance` (Aurora) |
 
 In both cases the module always creates:
+
 - `aws_db_subnet_group` — places DB in private subnets
 - `aws_security_group` — allows DB port from VPC CIDR
 - `aws_db_parameter_group` or `aws_rds_cluster_parameter_group` with parameters: `max_connections`, `log_statement`, `work_mem`
@@ -363,6 +481,9 @@ helm uninstall jenkins -n jenkins
 helm uninstall argocd-apps -n argocd
 helm uninstall argocd -n argocd
 
+# Final project addition (monitoring)
+helm uninstall kube-prometheus-stack -n monitoring
+
 terraform destroy -auto-approve
 ```
 
@@ -371,4 +492,4 @@ terraform destroy -auto-approve
 **Student**: Denys Zelenskyi  
 **Course**: DevOps  
 **Lesson**: 8-9 + DB Module — CI/CD with Jenkins, Argo CD, and Universal RDS Module  
-**Branch**: `lesson-db-module`
+**Branch**: `final-project`

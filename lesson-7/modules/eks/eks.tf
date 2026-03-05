@@ -39,6 +39,8 @@ resource "aws_eks_cluster" "main" {
     endpoint_public_access  = true
   }
 
+  bootstrap_self_managed_addons = false
+
   access_config {
     authentication_mode                         = "API"
     bootstrap_cluster_creator_admin_permissions = true
@@ -135,7 +137,9 @@ resource "aws_eks_node_group" "main" {
   depends_on = [
     aws_iam_role_policy_attachment.eks_worker_node_policy,
     aws_iam_role_policy_attachment.eks_cni_policy,
-    aws_iam_role_policy_attachment.eks_container_registry_policy
+    aws_iam_role_policy_attachment.eks_container_registry_policy,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy
   ]
 
   lifecycle {

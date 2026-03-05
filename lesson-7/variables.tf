@@ -149,3 +149,14 @@ variable "rds_db_password" {
   sensitive   = true
   default     = "changeme123!"
 }
+
+# ─────────────────────────────────────────────
+# Monitoring variables
+# ─────────────────────────────────────────────
+
+variable "grafana_admin_password" {
+  type        = string
+  description = "Admin password for Grafana"
+  sensitive   = true
+  default     = "admin123"
+}

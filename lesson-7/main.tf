@@ -133,6 +133,18 @@ module "argo_cd" {
   django_app_path        = var.django_app_path
 }
 
+# Monitoring module (Prometheus + Grafana)
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  cluster_name           = module.eks.cluster_name
+  cluster_endpoint       = module.eks.cluster_endpoint
+  cluster_ca_certificate = module.eks.cluster_certificate_authority_data
+  aws_region             = var.aws_region
+  grafana_admin_password = var.grafana_admin_password
+  environment            = var.environment
+}
+
 # RDS module
 module "rds" {
   source = "./modules/rds"

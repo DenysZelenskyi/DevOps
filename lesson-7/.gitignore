@@ -11,6 +11,17 @@ terraform.tfvars
 .terraform/
 .terraform.lock.hcl
 
+# Terraform lock metadata
+.terraform.tfstate.lock.info
+
+# macOS
+.DS_Store
+
+# Local artifacts
+nohup.out
+tfplan
+*.log
+
 # Crash log files
 crash.log
 
